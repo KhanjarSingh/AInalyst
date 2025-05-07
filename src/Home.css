@@ -4,7 +4,7 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  background-color: #f5f5f5;
+  background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
   margin: 0;
   padding: 0;
   overflow-y: auto;
@@ -817,8 +817,9 @@
 .animated-bg {
   min-height: 100vh;
   width: 100vw;
-  background: linear-gradient(120deg, #f9f7f6 0%, #e0e7ff 100%);
-  animation: gradientMove 8s ease-in-out infinite alternate;
+  background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+  background-size: 400% 400%;
+  animation: gradientMove 15s ease infinite;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -826,7 +827,8 @@
 
 @keyframes gradientMove {
   0% { background-position: 0% 50%; }
-  100% { background-position: 100% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .home-hero-container {
@@ -841,7 +843,7 @@
 .home-hero-title {
   font-size: 2.8rem;
   font-weight: 800;
-  color: #22223b;
+  color: #2d3748;
   margin-bottom: 0.5rem;
   text-align: center;
   letter-spacing: -1px;
@@ -850,17 +852,16 @@
 
 .home-hero-subtitle {
   font-size: 1.25rem;
-  color: #4a4e69;
+  color: #4a5568;
   margin-bottom: 2.5rem;
   text-align: center;
   width: 100%;
 }
 
 .glass-card {
-  background: rgba(255,255,255,0.85);
-  box-shadow: 0 8px 32px 0 rgba(31,38,135,0.10);
-  backdrop-filter: blur(8px);
-  border: 1.5px solid rgba(200,200,255,0.18);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 2rem;
   padding: 2.5rem 2rem 2rem 2rem;
   display: flex;
@@ -870,6 +871,7 @@
   max-width: 480px;
   margin: 0 auto;
   gap: 1.5rem;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
 }
 
 .home-search-icon {

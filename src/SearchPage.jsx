@@ -23,8 +23,8 @@ const SearchPage = () => {
   return (
     <div className="home-hero-bg animated-bg">
       <div className="home-hero-container">
-        <h1 className="home-hero-title">AI Competitor Research Assistant</h1>
-        <p className="home-hero-subtitle">Instant insights into your startup's competitive landscape</p>
+        <h1 className="home-hero-title">Uncover The Competetive Edge</h1>
+        <p className="home-hero-subtitle">Type a Startup name. Get snapshot of its rivals.</p>
         <div className="home-search-card glass-card">
           <div className="home-search-icon rocket-animate">
             <span role="img" aria-label="rocket" className="home-emoji">🚀</span>
