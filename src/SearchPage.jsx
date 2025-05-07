@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Home.css';
 
-const EXAMPLES = ['Boat', 'Propacity', 'Delhivery', 'Cred', 'Pharmeasy', 'Swiggy' ];
+const EXAMPLES = ['Boat', 'Propacity', 'Delhivery', 'Cred', 'Pharmeasy', 'Swiggy', 'Nykaa' ];
 
 const SearchPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
