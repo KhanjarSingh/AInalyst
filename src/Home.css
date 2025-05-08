@@ -910,6 +910,7 @@
   font-size: 1.15rem;
   font-weight: 600;
   color: #22223b;
+  color: black;
   margin-bottom: 0.2rem;
   width: 100%;
   text-align: left;
@@ -917,12 +918,14 @@
 
 .home-search-input-row {
   display: flex;
+  color: black;
   align-items: center;
   gap: 0.7rem;
   width: 100%;
 }
 
 .home-search-input {
+  color: black;
   flex: 1;
   font-size: 1.1rem;
   padding: 1rem 1.2rem;
