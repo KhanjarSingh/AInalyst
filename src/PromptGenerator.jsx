@@ -64,7 +64,7 @@ export default function PromptGenerator({ company }) {
     try {
       setLoading(true);
       setError(null);
-      const ai = new GoogleGenAI({ apiKey: "AIzaSyDumxpXsDvXiEPtCnZ085xO0tqlWfknACM" });
+      const ai = new GoogleGenAI({ apiKey: "AIzaSyB2aCMbf4YOEa-0UNyHYBE8UAhg9MrDOsQ" });
       
       const prompt = `Analyze the company "${company}" and provide a response in the following exact JSON format without any additional text or explanation:
       {
