@@ -3,20 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import ComparisonGraphs from "./ComparisonGraphs";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import "./PromptGenerator.css";
 
-function safeJsonParse(text) {
-  const cleaned = text
-    .replace(/```json/gi, "")
-    .replace(/```/g, "")
-    .trim();
 
-  if (!cleaned.startsWith("{")) {
-    throw new Error("Model did not return valid JSON");
-  }
-
-  return JSON.parse(cleaned);
-}
 
 export default function PromptGenerator({ company }) {
   const [companyData, setCompanyData] = useState(null);
@@ -28,14 +16,19 @@ export default function PromptGenerator({ company }) {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   const hasFetched = useRef(false);
+  const isRequesting = useRef(false);
 
   useEffect(() => {
     hasFetched.current = false;
   }, [company]);
 
   useEffect(() => {
-    if (!company || hasFetched.current) return;
+    if (!company || hasFetched.current || isRequesting.current) return;
     hasFetched.current = true;
+    setCompanyData(null);
+    setCompetitorsData([]);
+    setPromptResponse("");
+    setError(null);
     generateResponse();
   }, [company]);
 
@@ -52,6 +45,7 @@ export default function PromptGenerator({ company }) {
         ...data.company,
         marketShare: parseFloat(data.company.marketShare) || 0,
         revenue: parseFloat(data.company.revenue) || 0,
+        founded: String(data.company.founded || ""),
         name: data.company.name || company,
         uniqueDetails: data.company.uniqueDetails || [],
         latestNews: data.company.latestNews || [],
@@ -60,7 +54,7 @@ export default function PromptGenerator({ company }) {
         futureOutlook: data.company.futureOutlook || ""
       };
 
-      const validCompetitors = data.competitors
+      const validCompetitors = (data.competitors || [])
         .filter(comp => comp.name && (comp.marketShare || comp.revenue))
         .map(comp => ({
           ...comp,
@@ -85,75 +79,76 @@ export default function PromptGenerator({ company }) {
   };
 
   async function generateResponse(retryCount = 0) {
+    if (isRequesting.current) return;
+    
     try {
+      isRequesting.current = true;
       setLoading(true);
       setError(null);
       
-      const prompt = `Analyze the company "${company}" and provide a response in the following exact JSON format without any additional text or explanation:
-      {
-        "company": {
-          "name": "${company}",
-          "description": "string",
-          "marketShare": number,
-          "revenue": number,
-          "industry": "string",
-          "founded": "string",
-          "headquarters": "string",
-          "keyStrengths": ["string"],
-          "uniqueSellingPoints": ["string"],
-          "uniqueDetails": [
-            {
-              "title": "string",
-              "description": "string"
-            }
-          ],
-          "latestNews": [
-            {
-              "date": "string",
-              "headline": "string",
-              "summary": "string"
-            }
-          ],
-          "keyInnovations": ["string"],
-          "marketPosition": "string",
-          "futureOutlook": "string"
-        },
-        "competitors": [
-          {
-            "name": "string",
-            "marketShare": number,
-            "revenue": number,
-            "strengths": ["string"],
-            "weaknesses": ["string"],
-            "uniqueFeatures": ["string"],
-            "recentDevelopments": ["string"],
-            "competitiveAdvantage": "string"
-          }
-        ]
-      }
-
-      Rules:
-      1. All numbers must be actual numbers, not strings
-      2. Include exactly 3 top competitors
-      3. Market share should be a percentage (0-100)
-      4. Revenue should be in millions
-      5. For each competitor, provide at least 2-3 unique features and recent developments
-      6. Include at least 3-4 unique details about the company
-      7. Include at least 3 latest news items from the past year
-      8. Make the analysis detailed and specific
-      9. Ensure all required fields are present`;
-
       const completion = await groq.chat.completions.create({
         model: "llama-3.1-8b-instant",
-        temperature: 0.3,
-        messages: [{ role: "user", content: prompt }],
+        temperature: 0.1,
+        max_tokens: 1500,
+        messages: [{ 
+          role: "user", 
+          content: `You are a business analyst. Research and analyze the real company "${company}". Provide actual facts, not generic placeholders. Return only valid JSON:
+
+{
+  "company": {
+    "name": "${company}",
+    "description": "[Write actual description of ${company} - what they do, their business model, key products/services]",
+    "marketShare": [actual number],
+    "revenue": [actual revenue in millions],
+    "industry": "[actual industry]",
+    "founded": "[actual founding year]",
+    "headquarters": "[actual location]",
+    "keyStrengths": ["actual strength 1", "actual strength 2"],
+    "uniqueSellingPoints": ["actual USP 1", "actual USP 2"],
+    "uniqueDetails": [{"title": "Real feature", "description": "Actual details about ${company}"}],
+    "latestNews": [{"date": "2024-01-01", "headline": "Real news about ${company}", "summary": "Actual summary"}],
+    "keyInnovations": ["actual innovation"],
+    "marketPosition": "[actual market position]",
+    "futureOutlook": "[realistic outlook]"
+  },
+  "competitors": [{
+    "name": "[Real competitor name]",
+    "marketShare": [actual number],
+    "revenue": [actual number],
+    "strengths": ["real strength"],
+    "weaknesses": ["real weakness"],
+    "uniqueFeatures": ["real feature"],
+    "recentDevelopments": ["real development"],
+    "competitiveAdvantage": "real advantage"
+  }]
+}
+
+IMPORTANT: Replace ALL bracketed placeholders with real information about ${company}.` 
+        }],
       });
 
       try {
-        const cleanedResponse = completion.choices[0].message.content
+        let cleanedResponse = completion.choices[0].message.content
           .replace(/```json\n?/g, '')
           .replace(/```\n?/g, '')
+          .replace(/&#39;/g, "'")
+          .replace(/&quot;/g, '"')
+          .replace(/&amp;/g, '&')
+          .replace(/\n/g, ' ')
           .trim();
+        
+        const jsonStart = cleanedResponse.indexOf('{');
+        const jsonEnd = cleanedResponse.lastIndexOf('}') + 1;
+        if (jsonStart !== -1 && jsonEnd > jsonStart) {
+          cleanedResponse = cleanedResponse.substring(jsonStart, jsonEnd);
+        }
+        
+        cleanedResponse = cleanedResponse
+          .replace(/,\s*}/g, '}')
+          .replace(/,\s*]/g, ']')
+          .replace(/\\'/g, "'")
+          .replace(/(["'])(\w+)(["']):/g, '"$2":')
+          .replace(/:\s*(["'])(.*?)(["'])\s*([,}])/g, ': "$2"$4');
         
         const data = JSON.parse(cleanedResponse);
         const filtered = filterData(data);
@@ -162,24 +157,31 @@ export default function PromptGenerator({ company }) {
         setCompetitorsData(filtered.competitors);
         setPromptResponse(filtered.company.description);
       } catch (parseError) {
-        console.error('Error parsing JSON:', parseError);
+        console.error('Parse error:', parseError);
         console.error('Raw response:', completion.choices[0].message.content);
-        setError('Error processing company data. Please try again.');
+        if (retryCount < 2) {
+          await sleep(2000);
+          return generateResponse(retryCount + 1);
+        }
+        throw new Error('Failed to parse response');
       }
-    } catch (error) {
-      console.error('Error generating response:', error);
       
-      if (error.message?.includes('429') && retryCount < 3) {
-        const backoffTime = Math.pow(2, retryCount) * 1000;
-        setError(`Rate limit reached. Retrying in ${backoffTime/1000} seconds...`);
-        await sleep(backoffTime);
+    } catch (error) {
+      console.error('Error:', error);
+      if (error.status === 429 && retryCount < 3) {
+        const waitTime = Math.min(5000 * Math.pow(2, retryCount), 30000);
+        setError(`Rate limited. Retrying in ${waitTime/1000}s...`);
+        await sleep(waitTime);
         return generateResponse(retryCount + 1);
       }
-      
-      setError('Unable to generate response. Please try again in a few minutes.');
-      setPromptResponse('');
+      if (retryCount < 2) {
+        await sleep(2000);
+        return generateResponse(retryCount + 1);
+      }
+      setError('Service temporarily unavailable. Please try again.');
     } finally {
       setLoading(false);
+      isRequesting.current = false;
     }
   }
 
@@ -262,6 +264,32 @@ export default function PromptGenerator({ company }) {
         <div className="loading-card">
           <i className="fa-solid fa-spinner fa-spin"></i>
           <p>Loading company data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !promptResponse) {
+    return (
+      <div className="prompt-response">
+        <div className="error-message">
+          {error}
+          <button onClick={() => generateResponse()} style={{marginLeft: '10px'}}>
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!promptResponse && !loading && !error) {
+    return (
+      <div className="prompt-response">
+        <div className="error-message">
+          No data available. 
+          <button onClick={() => generateResponse()} style={{marginLeft: '10px'}}>
+            Retry
+          </button>
         </div>
       </div>
     );
