@@ -1,24 +1,48 @@
-import { GoogleGenAI } from "@google/genai";
-import { useState, useEffect } from "react";
-import ComparisonGraphs from './ComparisonGraphs';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import Groq from "groq-sdk";
+import { useEffect, useRef, useState } from "react";
+import ComparisonGraphs from "./ComparisonGraphs";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import "./PromptGenerator.css";
+
+function safeJsonParse(text) {
+  const cleaned = text
+    .replace(/```json/gi, "")
+    .replace(/```/g, "")
+    .trim();
+
+  if (!cleaned.startsWith("{")) {
+    throw new Error("Model did not return valid JSON");
+  }
+
+  return JSON.parse(cleaned);
+}
 
 export default function PromptGenerator({ company }) {
-  const [promptResponse, setPromptResponse] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [companyData, setCompanyData] = useState(null);
   const [competitorsData, setCompetitorsData] = useState([]);
-  const [filteredData, setFilteredData] = useState(null);
-  const [activeSection, setActiveSection] = useState('overview');
+  const [promptResponse, setPromptResponse] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [activeSection, setActiveSection] = useState("overview");
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
+  const hasFetched = useRef(false);
+
   useEffect(() => {
-    if (company) {
-      generateResponse();
-    }
+    hasFetched.current = false;
   }, [company]);
+
+  useEffect(() => {
+    if (!company || hasFetched.current) return;
+    hasFetched.current = true;
+    generateResponse();
+  }, [company]);
+
+  const groq = new Groq({
+    apiKey: import.meta.env.VITE_GROQ_API_KEY,
+    dangerouslyAllowBrowser: true,
+  });
 
   const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -64,7 +88,6 @@ export default function PromptGenerator({ company }) {
     try {
       setLoading(true);
       setError(null);
-      const ai = new GoogleGenAI({ apiKey: "AIzaSyAdM-8aCXDjY6Uqa6j5aGQ4biVPrSAvtMY" });
       
       const prompt = `Analyze the company "${company}" and provide a response in the following exact JSON format without any additional text or explanation:
       {
@@ -120,13 +143,14 @@ export default function PromptGenerator({ company }) {
       8. Make the analysis detailed and specific
       9. Ensure all required fields are present`;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
-        contents: prompt,
+      const completion = await groq.chat.completions.create({
+        model: "llama-3.1-8b-instant",
+        temperature: 0.3,
+        messages: [{ role: "user", content: prompt }],
       });
 
       try {
-        const cleanedResponse = response.text
+        const cleanedResponse = completion.choices[0].message.content
           .replace(/```json\n?/g, '')
           .replace(/```\n?/g, '')
           .trim();
@@ -137,10 +161,9 @@ export default function PromptGenerator({ company }) {
         setCompanyData(filtered.company);
         setCompetitorsData(filtered.competitors);
         setPromptResponse(filtered.company.description);
-        setFilteredData(filtered);
       } catch (parseError) {
         console.error('Error parsing JSON:', parseError);
-        console.error('Raw response:', response.text);
+        console.error('Raw response:', completion.choices[0].message.content);
         setError('Error processing company data. Please try again.');
       }
     } catch (error) {
@@ -232,7 +255,6 @@ export default function PromptGenerator({ company }) {
       setIsGeneratingPDF(false);
     }
   };
-  
 
   if (loading) {
     return (
