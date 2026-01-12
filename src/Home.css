@@ -79,7 +79,7 @@
   display: flex;
   position: relative;
   min-height: calc(100vh - 200px);
-  padding-left: 80px; /* Space for fixed navigation */
+  padding-left: 80px; 
 }
 
 .section-nav {
@@ -190,6 +190,10 @@
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  border-radius: 2rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 .response-content,
@@ -200,10 +204,23 @@
 .comparison-section {
   margin-bottom: 3rem;
   scroll-margin-top: 2rem;
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+  backdrop-filter: blur(10px);
+  border-radius: 1.5rem;
+  padding: 2.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  transition: all 0.3s ease;
+}
+
+.response-content:hover,
+.unique-details-section:hover,
+.innovations-section:hover,
+.competitors-section:hover,
+.news-section:hover,
+.comparison-section:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
 }
 
 .response-content {
@@ -215,10 +232,24 @@
 }
 
 .response-content h2 {
-  color: #333;
-  margin-bottom: 1rem;
-  font-size: 1.5rem;
+  color: #1a202c;
+  margin-bottom: 1.5rem;
+  font-size: 2rem;
+  font-weight: 700;
   word-wrap: break-word;
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+.response-content h2::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px;
 }
 
 .response-content p {
@@ -247,7 +278,7 @@
   min-height: calc(100vh - 200px);
 }
 
-/* Loading indicator for data fetching */
+
 .loading {
   display: flex;
   flex-direction: column;
@@ -372,16 +403,19 @@
 }
 
 .competitor-card {
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 1.5rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  border: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 1.2rem;
+  padding: 2rem;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(99, 102, 241, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
 }
 
 .competitor-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transform: translateY(-6px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  border-color: rgba(99, 102, 241, 0.2);
 }
 
 .competitor-card h3 {
@@ -761,7 +795,7 @@
 
 
 
-/* PDF Generation Styles */
+
 @media print {
   .content-wrapper {
     height: auto !important;
@@ -784,7 +818,7 @@
   }
 }
 
-/* Loading indicator for PDF generation */
+
 .loading-pdf {
   position: fixed;
   top: 50%;
@@ -812,7 +846,6 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Animated background gradient */
 .animated-bg {
   min-height: 100vh;
   width: 100vw;

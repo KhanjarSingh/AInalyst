@@ -32,6 +32,24 @@ export default function PromptGenerator({ company }) {
     generateResponse();
   }, [company]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = ['overview', 'unique-details', 'innovations', 'competitors', 'news', 'comparison'];
+      const scrollPosition = window.scrollY + 100;
+      
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const element = document.getElementById(sections[i]);
+        if (element && element.offsetTop <= scrollPosition) {
+          setActiveSection(sections[i]);
+          break;
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [promptResponse]);
+
   const groq = new Groq({
     apiKey: import.meta.env.VITE_GROQ_API_KEY,
     dangerouslyAllowBrowser: true,
